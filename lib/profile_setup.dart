@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dietary_preferences_screen.dart';
+import 'dietary_preferences.dart';
 
+// Collects basic profile information so recipes can feel more personalized
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
 
@@ -14,7 +15,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _fullNameController = TextEditingController();
   final _ageController = TextEditingController();
 
-  String _selectedSkill = 'Beginner';
+  String _selectedSkill = 'Beginner'; // default choice for new cooks
 
   @override
   void dispose() {
@@ -23,16 +24,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-void _continue() {
-  if (_formKey.currentState!.validate()) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const DietaryPreferencesScreen(),
-      ),
-    );
+  void _continue() {
+    if (_formKey.currentState!.validate()) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DietaryPreferencesScreen(
+            fullName: _fullNameController.text.trim(),
+          ),
+        ),
+      );
+    }
   }
-}
 
   Widget _progressBar(bool active) {
     return Container(
@@ -45,6 +48,7 @@ void _continue() {
     );
   }
 
+  // Reusable option card for the cooking skill choices
   Widget _skillOption({
     required String title,
     required String subtitle,

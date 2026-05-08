@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'calorie_goal.dart';
 
+// Lets users choose dietary preferences and optionally enter allergies
 class DietaryPreferencesScreen extends StatefulWidget {
-  const DietaryPreferencesScreen({super.key});
+  final String fullName;
+
+  const DietaryPreferencesScreen({
+    super.key,
+    required this.fullName,
+  });
 
   @override
   State<DietaryPreferencesScreen> createState() =>
@@ -32,13 +38,15 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
   }
 
   void _continue() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const CalorieGoalScreen(),
-    ),
-  );
-}
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CalorieGoalScreen(
+          fullName: widget.fullName,
+        ),
+      ),
+    );
+  }
 
   Widget _progressBar(bool active) {
     return Container(
@@ -51,6 +59,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
     );
   }
 
+  // Builds each dietary restriction card in the grid
   Widget _dietCard(_DietOption option) {
     final isSelected = _selectedPreferences.contains(option.title);
 

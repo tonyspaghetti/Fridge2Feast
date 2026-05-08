@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'home.dart';
 
+// Final onboarding step where users choose a daily calorie target
 class CalorieGoalScreen extends StatefulWidget {
-  const CalorieGoalScreen({super.key});
+  final String fullName;
+
+  const CalorieGoalScreen({
+    super.key,
+    required this.fullName,
+  });
 
   @override
   State<CalorieGoalScreen> createState() => _CalorieGoalScreenState();
@@ -10,6 +17,7 @@ class CalorieGoalScreen extends StatefulWidget {
 class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
   double _calories = 2000;
 
+  // These values update whenever the slider changes
   int get calories => _calories.round();
   int get perMeal => (calories / 3).round();
   int get perDayDiv7 => (calories / 7).round();
@@ -27,8 +35,14 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
   }
 
   void _finishSetup() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Setup complete')),
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(
+          fullName: widget.fullName,
+        ),
+      ),
+      (route) => false,
     );
   }
 
@@ -189,9 +203,9 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
 
               const SizedBox(height: 32),
 
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text(
                     '1,200',
                     style: TextStyle(

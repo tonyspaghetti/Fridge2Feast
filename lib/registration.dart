@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'profile_setup_screen.dart';
+import 'profile_setup.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -21,6 +21,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.dispose();
   }
 
+// Checks the email/password fields before going to profile setup
  void _handleSubmit() {
   if (_formKey.currentState!.validate()) {
     Navigator.push(
