@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'start.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String fullName;
@@ -57,6 +58,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     Navigator.pop(context);
+  }
+
+  void _signOut() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const StartScreen(),
+      ),
+      (route) => false,
+    );
   }
 
   Widget _sectionTitle(String title) {
@@ -331,6 +342,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
 
               _gradientButton(),
+
+              const SizedBox(height: 16),
+
+              Center(
+                child: TextButton.icon(
+                  onPressed: _signOut,
+                  icon: const Icon(Icons.logout_rounded),
+                  label: const Text('Sign Out'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
             ],
           ),
         ),
