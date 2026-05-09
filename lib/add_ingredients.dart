@@ -1,7 +1,7 @@
 // add_ingredients.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'database.dart';  
+import 'database.dart';  // DATABASE
 
 class AddIngredientsScreen extends StatefulWidget {
   const AddIngredientsScreen({super.key});
