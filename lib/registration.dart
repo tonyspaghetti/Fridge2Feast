@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'profile_setup.dart';
+import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -21,17 +23,28 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.dispose();
   }
 
-// Checks the email/password fields before going to profile setup
- void _handleSubmit() {
-  if (_formKey.currentState!.validate()) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ProfileSetupScreen(),
-      ),
-    );
+  void _handleSubmit() async {
+    if (_formKey.currentState!.validate()) {
+
+      const uuid = Uuid();
+      final userID = uuid.v4();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userID', userID);
+      await prefs.setString('userEmail', _emailController.text.trim());
+
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileSetupScreen(
+            email: _emailController.text.trim(),
+            userID: userID,
+          ),
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -46,28 +59,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
-
                 const Text(
                   'Create Account',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 8),
-
                 const Text(
                   "Let's get you set up with Fridge2Feast",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
-
                 const SizedBox(height: 32),
 
-                // EMAIL
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -75,7 +77,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Enter your email';
                     }
                     if (!value.contains('@')) {
@@ -87,7 +89,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                 const SizedBox(height: 20),
 
-                // PASSWORD
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -110,15 +111,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                 const Text(
                   'Must be at least 6 characters',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
 
                 const SizedBox(height: 32),
 
-                // BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -126,8 +123,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          Color(0xFF2E7D32), // green
-                          Color(0xFFFF8F00), // orange
+                          Color(0xFF2E7D32),
+                          Color(0xFFFF8F00),
                         ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
@@ -142,10 +139,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       child: const Text(
                         'Continue',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ),
@@ -155,10 +149,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                 const Text(
                   'By signing up, you agree to our Terms of Service and Privacy Policy',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
 
                 const SizedBox(height: 12),

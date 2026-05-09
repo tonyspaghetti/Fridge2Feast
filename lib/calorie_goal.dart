@@ -3,13 +3,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home.dart';
 
-// final onboarding step where user sets calorie goal
 class CalorieGoalScreen extends StatefulWidget {
+  final String email;
+  final String userID;
   final String fullName;
+  final String age;
+  final String cookingSkill;
+  final List<String> dietaryRestrictions;
+  final String allergies;
 
   const CalorieGoalScreen({
     super.key,
+    required this.email,
+    required this.userID,
     required this.fullName,
+    required this.age,
+    required this.cookingSkill,
+    required this.dietaryRestrictions,
+    required this.allergies,
   });
 
   @override
@@ -19,10 +30,8 @@ class CalorieGoalScreen extends StatefulWidget {
 class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
   double _calories = 2000;
 
-// values update when slider moves
   int get calories => _calories.round();
   int get perMeal => (calories / 3).round();
-  int get perDayDiv7 => (calories / 7).round();
   int get perWeek => calories * 7;
 
   Widget _progressBar(bool active) {
@@ -40,7 +49,17 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setBool('hasCompletedSetup', true);
+    await prefs.setString('email', widget.email);
+    await prefs.setString('userID', widget.userID);
     await prefs.setString('fullName', widget.fullName);
+    await prefs.setString('age', widget.age);
+    await prefs.setString('cookingSkill', widget.cookingSkill);
+    await prefs.setStringList(
+      'dietaryRestrictions',
+      widget.dietaryRestrictions,
+    );
+    await prefs.setString('allergies', widget.allergies);
+    await prefs.setDouble('dailyCalories', _calories);
 
     if (!mounted) return;
 
@@ -79,10 +98,7 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
           ),
           child: const Text(
             'Complete Setup',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.white),
           ),
         ),
       ),
@@ -107,10 +123,7 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.black54,
-          ),
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
@@ -153,20 +166,14 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
 
               const Text(
                 'Daily Calorie Goal',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 8),
 
               const Text(
                 "We'll suggest recipes that fit your target",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.black54),
               ),
 
               const SizedBox(height: 44),
@@ -215,8 +222,8 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
                     color: const Color(0xFF2E7D32),
                   ),
                   _statItem(
-                    value: perDayDiv7.toString(),
-                    label: 'Per Day ÷7',
+                    value: calories.toString(),
+                    label: 'Per Day',
                     color: const Color(0xFFFF8F00),
                   ),
                   _statItem(

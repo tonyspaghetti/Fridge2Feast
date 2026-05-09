@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'calorie_goal.dart';
 
-// Lets users choose dietary preferences and optionally enter allergies
 class DietaryPreferencesScreen extends StatefulWidget {
+  final String email;
+  final String userID;
   final String fullName;
+  final String age;
+  final String cookingSkill;
 
   const DietaryPreferencesScreen({
     super.key,
+    required this.email,
+    required this.userID,
     required this.fullName,
+    required this.age,
+    required this.cookingSkill,
   });
 
   @override
@@ -42,7 +49,13 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => CalorieGoalScreen(
+          email: widget.email,
+          userID: widget.userID,
           fullName: widget.fullName,
+          age: widget.age,
+          cookingSkill: widget.cookingSkill,
+          dietaryRestrictions: _selectedPreferences.toList(),
+          allergies: _allergiesController.text.trim(),
         ),
       ),
     );
@@ -59,7 +72,6 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
     );
   }
 
-  // Builds each dietary restriction card in the grid
   Widget _dietCard(_DietOption option) {
     final isSelected = _selectedPreferences.contains(option.title);
 
@@ -143,10 +155,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
           ),
           child: const Text(
             'Continue',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.white),
           ),
         ),
       ),
@@ -188,29 +197,21 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
 
               const Text(
                 'Dietary Preferences',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 8),
 
               const Text(
                 'Select all that apply to you',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.black54),
               ),
 
               const SizedBox(height: 32),
 
               const Text(
                 'Dietary Restrictions',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
 
               const SizedBox(height: 12),
@@ -234,48 +235,23 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
 
               const Text(
                 'Allergies (Optional)',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
 
               const SizedBox(height: 8),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _allergiesController,
-                      decoration: InputDecoration(
-                        hintText: 'e.g., Peanuts, Shellfish',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 16,
-                        ),
-                      ),
-                    ),
+              TextField(
+                controller: _allergiesController,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Peanuts, Shellfish',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 52,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Icon(Icons.add),
-                    ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 16,
                   ),
-                ],
+                ),
               ),
 
               const Spacer(),
