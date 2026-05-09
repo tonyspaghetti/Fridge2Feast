@@ -3,10 +3,12 @@ import 'dietary_preferences.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final String email;
+  final String userID;
 
   const ProfileSetupScreen({
     super.key,
     required this.email,
+    required this.userID,
   });
 
   @override
@@ -35,6 +37,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         MaterialPageRoute(
           builder: (context) => DietaryPreferencesScreen(
             email: widget.email,
+            userID: widget.userID,
             fullName: _fullNameController.text.trim(),
             age: _ageController.text.trim(),
             cookingSkill: _selectedSkill,

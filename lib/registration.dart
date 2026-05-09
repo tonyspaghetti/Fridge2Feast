@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'profile_setup.dart';
+import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -21,13 +23,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.dispose();
   }
 
-  void _handleSubmit() {
+  void _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
+
+      const uuid = Uuid();
+      final userID = uuid.v4();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userID', userID);
+      await prefs.setString('userEmail', _emailController.text.trim());
+
+
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ProfileSetupScreen(
             email: _emailController.text.trim(),
+            userID: userID,
           ),
         ),
       );
