@@ -3,6 +3,7 @@ import 'calorie_goal.dart';
 
 class DietaryPreferencesScreen extends StatefulWidget {
   final String email;
+  final String userID;
   final String fullName;
   final String age;
   final String cookingSkill;
@@ -10,6 +11,7 @@ class DietaryPreferencesScreen extends StatefulWidget {
   const DietaryPreferencesScreen({
     super.key,
     required this.email,
+    required this.userID,
     required this.fullName,
     required this.age,
     required this.cookingSkill,
@@ -48,6 +50,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
       MaterialPageRoute(
         builder: (context) => CalorieGoalScreen(
           email: widget.email,
+          userID: widget.userID,
           fullName: widget.fullName,
           age: widget.age,
           cookingSkill: widget.cookingSkill,
