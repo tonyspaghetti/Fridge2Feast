@@ -5,6 +5,7 @@ import 'home.dart';
 
 class CalorieGoalScreen extends StatefulWidget {
   final String email;
+  final String userID;
   final String fullName;
   final String age;
   final String cookingSkill;
@@ -14,6 +15,7 @@ class CalorieGoalScreen extends StatefulWidget {
   const CalorieGoalScreen({
     super.key,
     required this.email,
+    required this.userID,
     required this.fullName,
     required this.age,
     required this.cookingSkill,
@@ -48,6 +50,7 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
 
     await prefs.setBool('hasCompletedSetup', true);
     await prefs.setString('email', widget.email);
+    await prefs.setString('userID', widget.userID);
     await prefs.setString('fullName', widget.fullName);
     await prefs.setString('age', widget.age);
     await prefs.setString('cookingSkill', widget.cookingSkill);

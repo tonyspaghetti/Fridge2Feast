@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'add_ingredients.dart';
+import 'database.dart';
 import 'settings.dart';
 
 // main dashboard users see after onboarding
@@ -18,20 +19,64 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _fullName = 'Chef';
+  int _ingredientCount = 0; 
+  final DatabaseHelper _db = DatabaseHelper();
 
   @override
   void initState() {
     super.initState();
     _fullName = widget.fullName;
     _loadSavedProfile();
+    _loadIngredientCount();
   }
+
+  Future<void> _loadIngredientCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('userID');
+
+    if(userID != null){
+      final count = await _db.getIngredientCount(userID);
+      if(mounted){
+        setState((){
+          _ingredientCount = count;
+        });
+      }
+    }
+  }
+
+  void _addIngredients() async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const AddIngredientsScreen(),
+    ),
+  );
+  
+  await _loadIngredientCount();
+
+  if (result != null && result is List) {
+    // Ingredients were added
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added ${result.length} ingredient(s) to your kitchen!'),
+        backgroundColor: const Color(0xFF2E7D32),
+      ),
+    );
+
+    setState(() {
+
+    });
+  }
+}
 
   Future<void> _loadSavedProfile() async {
     final prefs = await SharedPreferences.getInstance();
 
-    setState(() {
+    if(mounted){
+      setState(() {
       _fullName = prefs.getString('fullName') ?? widget.fullName;
     });
+    }
   }
 
   String get firstName {
@@ -145,30 +190,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _outlineButton({
-    required String text,
-    required VoidCallback onPressed,
+  required String text,
+  required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: const Icon(Icons.add_rounded),
-        label: Text(text),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.black,
-          side: BorderSide(color: Colors.grey.shade300),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+  return SizedBox(
+    width: double.infinity,
+    height: 52,
+    child: OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.add_rounded),
+      label: Text(text),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.black,
+        side: BorderSide(color: Colors.grey.shade300),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _comingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -178,6 +223,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final bool hasIngredients = _ingredientCount > 0;
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCF5),
       body: SafeArea(
@@ -254,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 22),
                     Row(
                       children: [
-                        _statCard(number: '0', label: 'Ingredients'),
+                        _statCard(number: _ingredientCount.toString(), label: 'Ingredients'),
                         const SizedBox(width: 10),
                         _statCard(number: '0', label: 'Meals Cooked'),
                         const SizedBox(width: 10),
@@ -269,7 +316,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
               _outlineButton(
                 text: 'Add Ingredients',
-                onPressed: () => _comingSoon(context, 'Add ingredients'),
+                //onPressed: () => _comingSoon(context, 'Add ingredients'),
+                onPressed: _addIngredients,
               ),
 
               const SizedBox(height: 14),
