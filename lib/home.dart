@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'settings.dart';
 
-// Main dashboard users see after onboarding
-class HomeScreen extends StatelessWidget {
+// main dashboard users see after onboarding
+class HomeScreen extends StatefulWidget {
   final String fullName;
 
   const HomeScreen({
@@ -10,10 +12,47 @@ class HomeScreen extends StatelessWidget {
     required this.fullName,
   });
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _fullName = 'Chef';
+
+  @override
+  void initState() {
+    super.initState();
+    _fullName = widget.fullName;
+    _loadSavedProfile();
+  }
+
+  Future<void> _loadSavedProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      _fullName = prefs.getString('fullName') ?? widget.fullName;
+    });
+  }
+
   String get firstName {
-    final trimmed = fullName.trim();
+    final trimmed = _fullName.trim();
     if (trimmed.isEmpty) return 'Chef';
     return trimmed.split(' ').first;
+  }
+
+  Future<void> _openSettings() async {
+    final didSave = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsScreen(
+          fullName: _fullName,
+        ),
+      ),
+    );
+
+    if (didSave == true) {
+      await _loadSavedProfile();
+    }
   }
 
   Widget _statCard({
@@ -107,7 +146,6 @@ class HomeScreen extends StatelessWidget {
 
   Widget _outlineButton({
     required String text,
-    required IconData icon,
     required VoidCallback onPressed,
   }) {
     return SizedBox(
@@ -148,7 +186,6 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top banner
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(22),
@@ -188,16 +225,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                         InkWell(
-                          onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => SettingsScreen(
-        fullName: fullName,
-      ),
-    ),
-  );
-},
+                          onTap: _openSettings,
                           borderRadius: BorderRadius.circular(30),
                           child: Container(
                             width: 46,
@@ -239,16 +267,9 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: _outlineButton(
-                      text: 'Add Ingredients',
-                      icon: Icons.add_rounded,
-                      onPressed: () => _comingSoon(context, 'Add ingredients'),
-                    ),
-                  ),
-                ],
+              _outlineButton(
+                text: 'Add Ingredients',
+                onPressed: () => _comingSoon(context, 'Add ingredients'),
               ),
 
               const SizedBox(height: 14),
@@ -286,7 +307,6 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              // Empty kitchen card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(24, 34, 24, 28),

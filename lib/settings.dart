@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'start.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -39,6 +41,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.fullName);
+    _loadSavedSettings();
+  }
+
+  Future<void> _loadSavedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      _nameController.text = prefs.getString('fullName') ?? widget.fullName;
+      _emailController.text = prefs.getString('email') ?? '';
+      _ageController.text = prefs.getString('age') ?? '';
+      _allergiesController.text = prefs.getString('allergies') ?? '';
+      _selectedSkill = prefs.getString('cookingSkill') ?? 'Beginner';
+      _calories = prefs.getDouble('dailyCalories') ?? 2000;
+
+      _selectedDietaryRestrictions
+        ..clear()
+        ..addAll(prefs.getStringList('dietaryRestrictions') ?? []);
+    });
   }
 
   @override
@@ -50,17 +70,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('fullName', _nameController.text.trim());
+    await prefs.setString('email', _emailController.text.trim());
+    await prefs.setString('age', _ageController.text.trim());
+    await prefs.setString('allergies', _allergiesController.text.trim());
+    await prefs.setString('cookingSkill', _selectedSkill);
+    await prefs.setDouble('dailyCalories', _calories);
+    await prefs.setStringList(
+      'dietaryRestrictions',
+      _selectedDietaryRestrictions.toList(),
+    );
+
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Settings saved'),
       ),
     );
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
-  void _signOut() {
+  Future<void> _signOut() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.clear();
+
+    if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(

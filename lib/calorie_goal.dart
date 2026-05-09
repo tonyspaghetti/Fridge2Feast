@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'home.dart';
 
-// Final onboarding step where users choose a daily calorie target
+// final onboarding step where user sets calorie goal
 class CalorieGoalScreen extends StatefulWidget {
   final String fullName;
 
@@ -17,7 +19,7 @@ class CalorieGoalScreen extends StatefulWidget {
 class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
   double _calories = 2000;
 
-  // These values update whenever the slider changes
+// values update when slider moves
   int get calories => _calories.round();
   int get perMeal => (calories / 3).round();
   int get perDayDiv7 => (calories / 7).round();
@@ -34,7 +36,14 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
     );
   }
 
-  void _finishSetup() {
+  Future<void> _finishSetup() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('hasCompletedSetup', true);
+    await prefs.setString('fullName', widget.fullName);
+
+    if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
@@ -98,7 +107,6 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 12,
             color: Colors.black54,
@@ -110,6 +118,8 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final calories = _calories.round();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -162,89 +172,39 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
               const SizedBox(height: 44),
 
               Center(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 34,
-                    horizontal: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.local_fire_department_rounded,
-                        size: 42,
-                        color: Color(0xFFFF8F00),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department_rounded,
+                      size: 42,
+                      color: Color(0xFFFF8F00),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      calories.toString(),
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        calories.toString(),
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'calories per day',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const Text('calories per day'),
+                  ],
                 ),
               ),
 
               const SizedBox(height: 32),
 
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '1,200',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    '4,000',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              Slider(
+                value: _calories,
+                min: 1200,
+                max: 4000,
+                divisions: 28,
+                onChanged: (value) {
+                  setState(() {
+                    _calories = value;
+                  });
+                },
               ),
-
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: Colors.black,
-                  inactiveTrackColor: Colors.grey.shade300,
-                  thumbColor: Colors.black,
-                  overlayColor: Colors.black.withValues(alpha: 0.10),
-                  trackHeight: 5,
-                ),
-                child: Slider(
-                  value: _calories,
-                  min: 1200,
-                  max: 4000,
-                  divisions: 28,
-                  onChanged: (value) {
-                    setState(() {
-                      _calories = value;
-                    });
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 30),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -270,21 +230,6 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
               const Spacer(),
 
               _gradientButton(),
-
-              const SizedBox(height: 14),
-
-              Center(
-                child: TextButton(
-                  onPressed: _finishSetup,
-                  child: const Text(
-                    'Skip for now',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
