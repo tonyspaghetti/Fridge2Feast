@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dietary_preferences.dart';
 
-// Collects basic profile information so recipes can feel more personalized
 class ProfileSetupScreen extends StatefulWidget {
-  const ProfileSetupScreen({super.key});
+  final String email;
+
+  const ProfileSetupScreen({
+    super.key,
+    required this.email,
+  });
 
   @override
   State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
@@ -15,7 +19,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _fullNameController = TextEditingController();
   final _ageController = TextEditingController();
 
-  String _selectedSkill = 'Beginner'; // default choice for new cooks
+  String _selectedSkill = 'Beginner';
 
   @override
   void dispose() {
@@ -30,7 +34,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => DietaryPreferencesScreen(
+            email: widget.email,
             fullName: _fullNameController.text.trim(),
+            age: _ageController.text.trim(),
+            cookingSkill: _selectedSkill,
           ),
         ),
       );
@@ -48,7 +55,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  // Reusable option card for the cooking skill choices
   Widget _skillOption({
     required String title,
     required String subtitle,
@@ -93,10 +99,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
                 ),
               ],
             ),
@@ -154,29 +157,21 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                 const Text(
                   'Tell us about yourself',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 8),
 
                 const Text(
                   'Help us personalize your experience',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
 
                 const SizedBox(height: 32),
 
                 const Text(
                   'Full Name',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
 
                 const SizedBox(height: 8),
@@ -196,9 +191,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                 const Text(
                   'Age (optional)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
 
                 const SizedBox(height: 8),
@@ -213,9 +206,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                 const Text(
                   'Cooking Skill Level',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
 
                 const SizedBox(height: 12),
@@ -258,10 +249,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       ),
                       child: const Text(
                         'Continue',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ),
