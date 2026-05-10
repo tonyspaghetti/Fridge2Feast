@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/spoonacular_service.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
 import 'recipe_detail_screen.dart';
@@ -52,12 +53,25 @@ class _RecipeResultsScreenState extends State<RecipeResultsScreen> {
     });
 
     try {
-      final recipes = await RecipeService.generateRecipes(
-        ingredients: widget.ingredients,
-        dietaryRestrictions: _dietaryRestrictions,
-        allergies: _allergies,
-        calorieGoal: _calorieGoal,
-      );
+List<Recipe> recipes;
+
+try {
+  recipes = await SpoonacularRecipeService.generateRecipes(
+    ingredients: widget.ingredients,
+    dietaryRestrictions: _dietaryRestrictions,
+    allergies: _allergies,
+    calorieGoal: _calorieGoal,
+  );
+} catch (spoonacularError) {
+  debugPrint('Spoonacular failed, using local fallback: $spoonacularError');
+
+  recipes = await RecipeService.generateRecipes(
+    ingredients: widget.ingredients,
+    dietaryRestrictions: _dietaryRestrictions,
+    allergies: _allergies,
+    calorieGoal: _calorieGoal,
+  );
+}
 
       if (!mounted) return;
 
