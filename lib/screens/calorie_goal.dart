@@ -66,9 +66,7 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => HomeScreen(
-          fullName: widget.fullName,
-        ),
+        builder: (context) => HomeScreen(fullName: widget.fullName),
       ),
       (route) => false,
     );
@@ -81,10 +79,7 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2E7D32),
-              Color(0xFFFF8F00),
-            ],
+            colors: [Color(0xFF2E7D32), Color(0xFFFF8F00)],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -135,8 +130,9 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +230,7 @@ class _CalorieGoalScreenState extends State<CalorieGoalScreen> {
                 ],
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
               _gradientButton(),
             ],

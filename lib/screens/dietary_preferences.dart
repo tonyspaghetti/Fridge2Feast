@@ -110,11 +110,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
               activeColor: const Color(0xFF2E7D32),
               visualDensity: VisualDensity.compact,
             ),
-            Icon(
-              option.icon,
-              size: 22,
-              color: const Color(0xFF2E7D32),
-            ),
+            Icon(option.icon, size: 22, color: const Color(0xFF2E7D32)),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -138,10 +134,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2E7D32),
-              Color(0xFFFF8F00),
-            ],
+            colors: [Color(0xFF2E7D32), Color(0xFFFF8F00)],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -166,9 +159,15 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -254,7 +253,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 24),
 
               _continueButton(),
 

@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'start.dart';
+import '../start.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String fullName;
 
-  const SettingsScreen({
-    super.key,
-    required this.fullName,
-  });
+  const SettingsScreen({super.key, required this.fullName});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -46,6 +43,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSavedSettings() async {
     final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
 
     setState(() {
       _nameController.text = prefs.getString('fullName') ?? widget.fullName;
@@ -86,11 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings saved'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Settings saved')));
 
     Navigator.pop(context, true);
   }
@@ -104,9 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => const StartScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const StartScreen()),
       (route) => false,
     );
   }
@@ -134,10 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 15,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
     );
   }
 
@@ -184,10 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2E7D32),
-              Color(0xFFFF8F00),
-            ],
+            colors: [Color(0xFF2E7D32), Color(0xFFFF8F00)],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -222,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -256,10 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF2E7D32),
-                      Color(0xFFFF8F00),
-                    ],
+                    colors: [Color(0xFF2E7D32), Color(0xFFFF8F00)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -393,9 +379,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   label: const Text('Sign Out'),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.red,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),

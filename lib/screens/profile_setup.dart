@@ -58,10 +58,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  Widget _skillOption({
-    required String title,
-    required String subtitle,
-  }) {
+  Widget _skillOption({required String title, required String subtitle}) {
     final isSelected = _selectedSkill == title;
 
     return GestureDetector(
@@ -116,10 +113,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     return InputDecoration(
       hintText: hint,
       border: const OutlineInputBorder(),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
     );
   }
 
@@ -127,16 +121,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 24),
-
                 Row(
                   children: [
                     _progressBar(true),
@@ -214,10 +212,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                 const SizedBox(height: 12),
 
-                _skillOption(
-                  title: 'Beginner',
-                  subtitle: 'Just starting out',
-                ),
+                _skillOption(title: 'Beginner', subtitle: 'Just starting out'),
                 _skillOption(
                   title: 'Intermediate',
                   subtitle: 'Comfortable in the kitchen',
@@ -227,7 +222,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   subtitle: 'Experienced home chef',
                 ),
 
-                const Spacer(),
+                const SizedBox(height: 24),
 
                 SizedBox(
                   width: double.infinity,
@@ -235,10 +230,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF2E7D32),
-                          Color(0xFFFF8F00),
-                        ],
+                        colors: [Color(0xFF2E7D32), Color(0xFFFF8F00)],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),

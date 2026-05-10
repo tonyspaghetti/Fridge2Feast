@@ -45,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<key>NSCameraUsageDescription</key>
+<string>Fridge2Feast uses your camera to take a photo of food for freshness analysis.</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Fridge2Feast lets you choose a food photo from your library for freshness analysis.</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>Fridge2Feast may save or update food photos if you choose to keep them.</string>
 </dict>
 </plist>

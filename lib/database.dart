@@ -1,5 +1,5 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -16,11 +16,13 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'fridge2feast.db');
-    return await openDatabase(
+    final path = join(await getDatabasesPath(), 'fridge2feast.db');
+
+    return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -37,20 +39,32 @@ class DatabaseHelper {
         addedAt TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE INDEX idx_ingredients_user_name_category
+      ON ingredients(userID, name, category)
+    ''');
   }
 
-  // Get all ingredients for a user
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_ingredients_user_name_category
+        ON ingredients(userID, name, category)
+      ''');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getUserIngredients(String userID) async {
     final db = await database;
-    return await db.query(
+    return db.query(
       'ingredients',
       where: 'userID = ?',
       whereArgs: [userID],
-      orderBy: 'name ASC',
+      orderBy: 'category ASC, name COLLATE NOCASE ASC',
     );
   }
 
-  // Add or update ingredient (if exists, add to quantity)
   Future<void> addOrUpdateIngredient({
     required String userID,
     required String name,
@@ -59,93 +73,105 @@ class DatabaseHelper {
     required String category,
     String? expiryDate,
   }) async {
+    final cleanName = name.trim();
+    final cleanUnit = unit.trim();
+    final cleanCategory = category.trim().isEmpty ? 'Fridge' : category.trim();
+    final safeQuantity = quantity <= 0 ? 1.0 : quantity;
+
+    if (userID.trim().isEmpty || cleanName.isEmpty) return;
+
     final db = await database;
-    
-    // Check if ingredient already exists
+
     final existing = await db.query(
       'ingredients',
-      where: 'userID = ? AND name = ? AND category = ?',
-      whereArgs: [userID, name, category],
+      where: 'userID = ? AND lower(name) = lower(?) AND category = ?',
+      whereArgs: [userID, cleanName, cleanCategory],
+      limit: 1,
     );
-    
+
     if (existing.isNotEmpty) {
-      // Update: add to existing quantity
-      final existingQuantity = existing.first['quantity'] as double;
-      final newQuantity = existingQuantity + quantity;
+      final current = existing.first['quantity'];
+      final existingQuantity = current is num
+          ? current.toDouble()
+          : double.tryParse('$current') ?? 0.0;
+
       await db.update(
         'ingredients',
         {
-          'quantity': newQuantity,
-          'unit': unit.isNotEmpty ? unit : existing.first['unit'],
+          'quantity': existingQuantity + safeQuantity,
+          'unit': cleanUnit.isNotEmpty ? cleanUnit : existing.first['unit'],
+          'expiryDate': expiryDate ?? existing.first['expiryDate'],
         },
         where: 'id = ?',
         whereArgs: [existing.first['id']],
       );
     } else {
-      // Insert new ingredient
       await db.insert('ingredients', {
         'userID': userID,
-        'name': name,
-        'quantity': quantity,
-        'unit': unit,
-        'category': category,
+        'name': cleanName,
+        'quantity': safeQuantity,
+        'unit': cleanUnit,
+        'category': cleanCategory,
         'expiryDate': expiryDate,
         'addedAt': DateTime.now().toIso8601String(),
       });
     }
   }
 
-  // Decrement ingredient quantity by 1 (or remove if becomes 0)
   Future<bool> decrementIngredient(int id, double currentQuantity) async {
     final db = await database;
-    
+
     if (currentQuantity > 1) {
-      // Decrease by 1
       await db.update(
         'ingredients',
         {'quantity': currentQuantity - 1},
         where: 'id = ?',
         whereArgs: [id],
       );
-      return false; // Not removed, just decreased
-    } else {
-      // Remove completely
-      await db.delete(
-        'ingredients',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      return true; // Was removed
+      return false;
     }
+
+    await deleteIngredient(id);
+    return true;
   }
 
-  // Remove ingredient completely
   Future<void> deleteIngredient(int id) async {
     final db = await database;
-    await db.delete(
+    await db.delete('ingredients', where: 'id = ?', whereArgs: [id]);
+  }
+
+
+  Future<void> updateIngredientExpiry(int id, String? expiryDate) async {
+    final db = await database;
+    await db.update(
       'ingredients',
+      {'expiryDate': expiryDate},
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  // Clear all ingredients for a user
   Future<void> clearUserIngredients(String userID) async {
+    final db = await database;
+    await db.delete('ingredients', where: 'userID = ?', whereArgs: [userID]);
+  }
+
+  Future<void> clearCategory(String userID, String category) async {
     final db = await database;
     await db.delete(
       'ingredients',
-      where: 'userID = ?',
-      whereArgs: [userID],
+      where: 'userID = ? AND category = ?',
+      whereArgs: [userID, category],
     );
   }
 
-  // Get ingredient count for a user
   Future<int> getIngredientCount(String userID) async {
     final db = await database;
     final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM ingredients WHERE userID = ?',
+      'SELECT COUNT(*) AS count FROM ingredients WHERE userID = ?',
       [userID],
     );
-    return result.first['count'] as int;
+    final count = result.first['count'];
+    return count is int ? count : int.tryParse('$count') ?? 0;
   }
 }

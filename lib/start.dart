@@ -8,9 +8,7 @@ class StartScreen extends StatelessWidget {
   void _goToRegistration(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const RegistrationScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const RegistrationScreen()),
     );
   }
 
@@ -24,10 +22,7 @@ class StartScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 30),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 30)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -65,10 +60,7 @@ class StartScreen extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2E7D32),
-              Color(0xFFFF8F00),
-            ],
+            colors: [Color(0xFF2E7D32), Color(0xFFFF8F00)],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -157,10 +149,7 @@ class StartScreen extends StatelessWidget {
 
               const Text(
                 'Join thousands cooking smarter',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
 
               const SizedBox(height: 12),

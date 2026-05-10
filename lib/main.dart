@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'home.dart';
-import 'start.dart';
+import 'screens/home.dart';
+import 'start.dart'; // Fixed path
 
-// decides which screen to show when app opens
 void main() {
   runApp(const Fridge2FeastApp());
 }
@@ -29,6 +28,11 @@ class Fridge2FeastApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Fridge2Feast',
+      theme: ThemeData(
+        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFFFFFCF5),
+      ),
       home: FutureBuilder<Widget>(
         future: _getStartPage(),
         builder: (context, snapshot) {
@@ -36,9 +40,7 @@ class Fridge2FeastApp extends StatelessWidget {
             return const Scaffold(
               backgroundColor: Colors.white,
               body: Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF2E7D32),
-                ),
+                child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
               ),
             );
           }

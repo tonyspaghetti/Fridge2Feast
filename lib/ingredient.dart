@@ -23,9 +23,9 @@ class Ingredient {
     return {
       'id': id,
       'userID': userID,
-      'name': name,
+      'name': name.trim(),
       'quantity': quantity,
-      'unit': unit,
+      'unit': unit.trim(),
       'category': category,
       'expiryDate': expiryDate?.toIso8601String(),
       'addedAt': addedAt.toIso8601String(),
@@ -33,19 +33,27 @@ class Ingredient {
   }
 
   factory Ingredient.fromMap(Map<String, dynamic> map) {
+    double asDouble(dynamic value) {
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 1.0;
+      return 1.0;
+    }
+
+    DateTime? asDate(dynamic value) {
+      if (value == null) return null;
+      if (value is String && value.isNotEmpty) return DateTime.tryParse(value);
+      return null;
+    }
+
     return Ingredient(
-      id: map['id'],
-      userID: map['userID'],
-      name: map['name'],
-      quantity: map['quantity'] is int 
-          ? (map['quantity'] as int).toDouble() 
-          : map['quantity'],
-      unit: map['unit'] ?? '',
-      category: map['category'],
-      expiryDate: map['expiryDate'] != null 
-          ? DateTime.parse(map['expiryDate']) 
-          : null,
-      addedAt: DateTime.parse(map['addedAt']),
+      id: map['id'] is int ? map['id'] as int : (map['id'] == null ? null : int.tryParse(map['id'].toString())),
+      userID: map['userID']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      quantity: asDouble(map['quantity']),
+      unit: map['unit']?.toString() ?? '',
+      category: map['category']?.toString() ?? 'Fridge',
+      expiryDate: asDate(map['expiryDate']),
+      addedAt: asDate(map['addedAt']) ?? DateTime.now(),
     );
   }
 }
