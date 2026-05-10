@@ -25,7 +25,8 @@ Reduce food waste and make cooking easier with smart, personalized recipes.
 - make sure you are in the root Fridge2Feast Folder
 - Run following commands in order:
   - flutter pub get
+  - dart run flutter_launcher_icons                                       
   - flutter run \
-    --dart-define=SPOONACULAR_API_KEY="GO AWAY HACKERS - NO API KEY FOR YOU - K.S." \
-    --dart-define=ROBOFLOW_API_KEY="GO AWAY HACKERS - NO API KEY FOR YOU - K.S."
+    --dart-define=SPOONACULAR_API_KEY=" GO AWAY HACKERS - NO API KEY FOR YOU - K.S." \
+    --dart-define=ROBOFLOW_API_KEY=" GO AWAY HACKERS - NO API KEY FOR YOU - K.S."
 - Make sure you have some form of emulator or a physical device to test the app on.
