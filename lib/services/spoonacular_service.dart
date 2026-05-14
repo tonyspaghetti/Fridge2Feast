@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 class SpoonacularRecipeService {
   static const String _apiKey = String.fromEnvironment(
     'SPOONACULAR_API_KEY',
-    defaultValue: 'PASTE_YOUR_SPOONACULAR_API_KEY_HERE',
+    defaultValue: 'PASTE_YOUR_SPOONACULAR_API_KEY',
   );
 
   static const String _baseUrl = 'https://api.spoonacular.com';
@@ -93,10 +93,16 @@ class SpoonacularRecipeService {
       throw Exception('Spoonacular returned no recipes.');
     }
 
-    return results
-        .whereType<Map<String, dynamic>>()
-        .map((json) => _recipeFromSpoonacularJson(json, ingredients))
-        .toList();
+final recipes = results
+    .whereType<Map<String, dynamic>>()
+    .map((json) => _recipeFromSpoonacularJson(json, ingredients))
+    .toList();
+
+recipes.sort(
+  (a, b) => b.matchPercentage.compareTo(a.matchPercentage),
+);
+
+return recipes;
   }
 
   static Recipe _recipeFromSpoonacularJson(
@@ -154,67 +160,90 @@ class SpoonacularRecipeService {
     );
   }
 
-  static List<String> _extractIngredients(Map<String, dynamic> json) {
-    final extended = json['extendedIngredients'];
+ static List<String> _extractIngredients(Map<String, dynamic> json) {
+  final extended = json['extendedIngredients'];
 
-    if (extended is List) {
-      return extended
-          .whereType<Map<String, dynamic>>()
-          .map((item) {
-            final original = item['original']?.toString();
-            final name = item['name']?.toString();
+  if (extended is! List) return [];
 
-            return _stripHtml(
-              original?.trim().isNotEmpty == true ? original! : name ?? '',
-            );
-          })
-          .where((item) => item.trim().isNotEmpty)
-          .toList();
-    }
+  return extended
+      .whereType<Map<String, dynamic>>()
+      .map((item) {
+        final original = item['original']?.toString().trim();
+        final originalString = item['originalString']?.toString().trim();
+        final name = item['name']?.toString().trim();
 
-    return [];
-  }
+        final value = (original != null && original.isNotEmpty)
+            ? original
+            : (originalString != null && originalString.isNotEmpty)
+                ? originalString
+                : name ?? '';
 
-  static List<String> _extractInstructions(Map<String, dynamic> json) {
-    final analyzed = json['analyzedInstructions'];
+        return _stripHtml(value);
+      })
+      .where((item) {
+        final lower = item.toLowerCase();
 
-    if (analyzed is List && analyzed.isNotEmpty) {
-      final steps = <String>[];
+        if (item.trim().isEmpty) return false;
 
-      for (final instructionGroup in analyzed) {
-        if (instructionGroup is Map<String, dynamic>) {
-          final groupSteps = instructionGroup['steps'];
+        // Prevent recipe steps from accidentally appearing as ingredients.
+        if (lower.length > 120) return false;
+        if (lower.contains('cook over')) return false;
+        if (lower.contains('stirring occasionally')) return false;
+        if (lower.contains('serve immediately')) return false;
+        if (lower.contains('reduce the heat')) return false;
+        if (lower.contains('preheat')) return false;
+        if (lower.contains('add the')) return false;
 
-          if (groupSteps is List) {
-            for (final step in groupSteps) {
-              if (step is Map<String, dynamic>) {
-                final text = step['step']?.toString();
-                if (text != null && text.trim().isNotEmpty) {
-                  steps.add(_stripHtml(text));
-                }
+        return true;
+      })
+      .toList();
+}
+static List<String> _extractInstructions(Map<String, dynamic> json) {
+  final analyzed = json['analyzedInstructions'];
+
+  if (analyzed is List && analyzed.isNotEmpty) {
+    final steps = <String>[];
+
+    for (final group in analyzed) {
+      if (group is Map<String, dynamic>) {
+        final groupSteps = group['steps'];
+
+        if (groupSteps is List) {
+          for (final step in groupSteps) {
+            if (step is Map<String, dynamic>) {
+              final text = step['step']?.toString().trim();
+
+              if (text != null && text.isNotEmpty) {
+                steps.add(_stripHtml(text));
               }
             }
           }
         }
       }
-
-      if (steps.isNotEmpty) return steps;
     }
 
-    final rawInstructions = json['instructions']?.toString();
-
-    if (rawInstructions != null && rawInstructions.trim().isNotEmpty) {
-      return _stripHtml(rawInstructions)
-          .split(RegExp(r'\.\s+'))
-          .map((step) => step.trim())
-          .where((step) => step.isNotEmpty)
-          .map((step) => step.endsWith('.') ? step : '$step.')
-          .toList();
+    if (steps.isNotEmpty) {
+      return steps.toSet().toList();
     }
+  }
 
+  final rawInstructions = json['instructions']?.toString();
+
+  if (rawInstructions == null || rawInstructions.trim().isEmpty) {
     return [];
   }
 
+  final cleaned = _stripHtml(rawInstructions)
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  return cleaned
+      .split(RegExp(r'(?<=[.!?])\s+'))
+      .map((step) => step.trim())
+      .where((step) => step.isNotEmpty)
+      .toSet()
+      .toList();
+}
   static double _nutrientAmount(dynamic nutrients, String name) {
     if (nutrients is! List) return 0;
 
