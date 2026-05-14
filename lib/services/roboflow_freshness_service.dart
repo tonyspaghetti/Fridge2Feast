@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
+import 'local_onnx_service.dart';
 
 class RoboflowImagePrediction {
   final String label;
@@ -163,12 +164,73 @@ static Future<RoboflowImagePrediction?> analyzeImage(File imageFile) async {
     'Parsed prediction: ${prediction.label}, confidence: ${prediction.confidence}',
   );
 
-  return RoboflowImagePrediction(
-    label: prediction.label,
-    confidence: prediction.confidence,
-    rawResponse: decoded,
-  );
+return RoboflowImagePrediction(
+  label: prediction.label,
+  confidence: prediction.confidence,
+  rawResponse: {
+    ...decoded,
+    'source': 'roboflow_fallback',
+  },
+);
 }
+
+static Future<RoboflowImagePrediction?> analyzeImageWithFallback(
+  File imageFile, {
+  Duration localTimeout = const Duration(seconds: 20),
+  Duration roboflowTimeout = const Duration(seconds: 20),
+}) async {
+  try {
+    debugPrint('Trying local ONNX model first...');
+
+    final localPrediction = await LocalOnnxFreshnessService
+        .analyzeImage(imageFile)
+        .timeout(localTimeout);
+
+    if (localPrediction != null) {
+      debugPrint(
+        'Local ONNX succeeded: ${localPrediction.label}, '
+        '${(localPrediction.confidence * 100).toStringAsFixed(1)}%',
+      );
+      return localPrediction;
+    }
+
+    debugPrint('Local ONNX returned null. Falling back to Roboflow...');
+  } on TimeoutException {
+    debugPrint(
+      'Local ONNX exceeded ${localTimeout.inSeconds} seconds. '
+      'Falling back to Roboflow...',
+    );
+  } catch (e, st) {
+    debugPrint('Local ONNX failed. Falling back to Roboflow...');
+    debugPrint('$e');
+    debugPrint('$st');
+  }
+
+  try {
+    final roboflowPrediction = await analyzeImage(imageFile)
+        .timeout(roboflowTimeout);
+
+    if (roboflowPrediction != null) {
+      debugPrint(
+        'Roboflow fallback succeeded: ${roboflowPrediction.label}, '
+        '${(roboflowPrediction.confidence * 100).toStringAsFixed(1)}%',
+      );
+    } else {
+      debugPrint('Roboflow fallback returned null.');
+    }
+
+    return roboflowPrediction;
+  } on TimeoutException {
+    debugPrint('Roboflow fallback timed out.');
+    return null;
+  } catch (e, st) {
+    debugPrint('Roboflow fallback failed.');
+    debugPrint('$e');
+    debugPrint('$st');
+    return null;
+  }
+}
+
   static _ParsedPrediction? _extractBestPrediction(Map<String, dynamic> json) {
     final candidates = <_ParsedPrediction>[];
 
@@ -306,142 +368,197 @@ static Future<RoboflowImagePrediction?> analyzeImage(File imageFile) async {
     return 0.0;
   }
 
-  static Future<FreshnessResult> assessFreshness(FreshnessInput input) async {
-    RoboflowImagePrediction? imagePrediction;
-    final reasons = <String>[];
-    var score = 100;
+static Future<FreshnessResult> assessFreshness(FreshnessInput input) async {
+  RoboflowImagePrediction? imagePrediction;
+  final reasons = <String>[];
+  var score = 100;
 
-    if (input.imageFile != null) {
-      try {
-        imagePrediction = await analyzeImage(input.imageFile!);
-        if (imagePrediction == null) {
-          reasons.add('Image model is not configured yet, so the result used the questionnaire only.');
-        } else {
-          final label = imagePrediction.label.toLowerCase();
-          final confidencePercent = (imagePrediction.confidence * 100).round();
-          reasons.add('Image model detected "${imagePrediction.label}" with $confidencePercent% confidence.');
+  // ------------------------------------------------------------
+  // IMAGE ANALYSIS:
+  // 1. Try local ONNX model first.
+  // 2. If local ONNX fails or takes more than 20 seconds, fall back to Roboflow.
+  // 3. If both fail, use questionnaire only.
+  // ------------------------------------------------------------
+  if (input.imageFile != null) {
+    try {
+      imagePrediction = await analyzeImageWithFallback(
+        input.imageFile!,
+        localTimeout: const Duration(seconds: 20),
+        roboflowTimeout: const Duration(seconds: 20),
+      );
 
-          if (_looksRotten(label)) {
-            score -= imagePrediction.confidence >= 0.70 ? 70 : 45;
-          } else if (_looksFresh(label)) {
-            score += imagePrediction.confidence >= 0.70 ? 10 : 5;
-          }
+      if (imagePrediction == null) {
+        reasons.add(
+          'Image analysis was unavailable or timed out, so the result used the questionnaire only.',
+        );
+      } else {
+        final label = imagePrediction.label.toLowerCase();
+        final confidencePercent = (imagePrediction.confidence * 100).round();
+
+        final source =
+            imagePrediction.rawResponse['source']?.toString() ?? 'image model';
+
+        reasons.add(
+          '$source detected "${imagePrediction.label}" with $confidencePercent% confidence.',
+        );
+
+        if (_looksRotten(label)) {
+          score -= imagePrediction.confidence >= 0.70 ? 70 : 45;
+        } else if (_looksFresh(label)) {
+          score += imagePrediction.confidence >= 0.70 ? 10 : 5;
         }
-      } on TimeoutException {
-        reasons.add('Image analysis timed out, so the result used the questionnaire only.');
-      } catch (_) {
-        reasons.add('Image analysis failed, so the result used the questionnaire only.');
       }
-    } else {
-      reasons.add('No image was added, so the result used the questionnaire only.');
+    } on TimeoutException {
+      reasons.add(
+        'Image analysis timed out, so the result used the questionnaire only.',
+      );
+    } catch (_) {
+      reasons.add(
+        'Image analysis failed, so the result used the questionnaire only.',
+      );
     }
+  } else {
+    reasons.add('No image was added, so the result used the questionnaire only.');
+  }
 
-    if (input.hasMold) {
-      score -= 100;
-      reasons.add('Visible mold is a strong unsafe-food signal.');
-    }
+  // ------------------------------------------------------------
+  // QUESTIONNAIRE / RULE-BASED SCORING
+  // ------------------------------------------------------------
 
-    if (input.hasSlime) {
+  if (input.hasMold) {
+    score -= 100;
+    reasons.add('Visible mold is a strong unsafe-food signal.');
+  }
+
+  if (input.hasSlime) {
+    score -= 75;
+    reasons.add('Slimy texture is a strong spoilage signal.');
+  }
+
+  switch (input.smell) {
+    case 'Bad / rotten':
+      score -= 90;
+      reasons.add(
+        'Bad or rotten smell usually means the food should not be eaten.',
+      );
+      break;
+
+    case 'Sour / unusual':
+      score -= 55;
+      reasons.add('Sour or unusual smell lowers freshness confidence.');
+      break;
+
+    case 'No smell':
+    case 'Normal':
+      reasons.add('Smell does not indicate obvious spoilage.');
+      break;
+  }
+
+  switch (input.texture) {
+    case 'Slimy':
       score -= 75;
-      reasons.add('Slimy texture is a strong spoilage signal.');
-    }
+      reasons.add('Slimy texture suggests spoilage.');
+      break;
 
-    switch (input.smell) {
-      case 'Bad / rotten':
-        score -= 90;
-        reasons.add('Bad or rotten smell usually means the food should not be eaten.');
-        break;
-      case 'Sour / unusual':
-        score -= 55;
-        reasons.add('Sour or unusual smell lowers freshness confidence.');
-        break;
-      case 'No smell':
-      case 'Normal':
-        reasons.add('Smell does not indicate obvious spoilage.');
-        break;
-    }
+    case 'Mushy':
+      score -= 50;
+      reasons.add('Mushy texture suggests the food is past peak freshness.');
+      break;
 
-    switch (input.texture) {
-      case 'Slimy':
-        score -= 75;
-        reasons.add('Slimy texture suggests spoilage.');
-        break;
-      case 'Mushy':
-        score -= 50;
-        reasons.add('Mushy texture suggests the food is past peak freshness.');
-        break;
-      case 'Soft':
-        score -= 20;
-        reasons.add('Soft texture suggests the food should be used soon.');
-        break;
-      case 'Firm':
-        reasons.add('Firm texture supports freshness.');
-        break;
-    }
+    case 'Soft':
+      score -= 20;
+      reasons.add('Soft texture suggests the food should be used soon.');
+      break;
 
-    switch (input.appearance) {
-      case 'Moldy':
-        score -= 100;
-        reasons.add('Moldy appearance is unsafe.');
-        break;
-      case 'Discolored':
-        score -= 35;
-        reasons.add('Discoloration lowers freshness confidence.');
-        break;
-      case 'Bruised / wilted':
-        score -= 20;
-        reasons.add('Bruising or wilting suggests the item should be used soon.');
-        break;
-      case 'Looks normal':
-        reasons.add('Appearance looks normal.');
-        break;
-    }
+    case 'Firm':
+      reasons.add('Firm texture supports freshness.');
+      break;
+  }
 
-    final shelfLifeDays = _estimateShelfLifeDays(input.foodName, input.storageMethod);
-    var daysLeft = shelfLifeDays;
+  switch (input.appearance) {
+    case 'Moldy':
+      score -= 100;
+      reasons.add('Moldy appearance is unsafe.');
+      break;
 
-    if (input.purchaseDate != null) {
-      final daysOwned = DateTime.now().difference(input.purchaseDate!).inDays;
-      daysLeft = shelfLifeDays - daysOwned;
-      reasons.add('Based on purchase date and storage, estimated shelf life is about $shelfLifeDays day(s).');
+    case 'Discolored':
+      score -= 35;
+      reasons.add('Discoloration lowers freshness confidence.');
+      break;
 
-      if (daysLeft < 0) {
-        score -= 40 + (daysLeft.abs() * 5).clamp(0, 40).toInt();
-        reasons.add('This item is past its typical storage window.');
-      } else if (daysLeft <= 2) {
-        score -= 20;
-        reasons.add('This item is near the end of its typical storage window.');
-      }
-    } else {
-      reasons.add('No purchase date was provided, so date-based confidence is lower.');
-    }
+    case 'Bruised / wilted':
+      score -= 20;
+      reasons.add('Bruising or wilting suggests the item should be used soon.');
+      break;
 
-    score = score.clamp(0, 100).toInt();
+    case 'Looks normal':
+      reasons.add('Appearance looks normal.');
+      break;
+  }
 
-    final status = score >= 70
-        ? 'Fresh'
-        : score >= 40
-            ? 'Use Soon'
-            : 'Unsafe';
+  // ------------------------------------------------------------
+  // DATE / SHELF LIFE SCORING
+  // ------------------------------------------------------------
 
-    final safeDaysLeft = status == 'Unsafe' ? 0 : daysLeft.clamp(0, 30).toInt();
+  final shelfLifeDays = _estimateShelfLifeDays(
+    input.foodName,
+    input.storageMethod,
+  );
 
-    final confidence = _confidenceLabel(
-      imagePrediction: imagePrediction,
-      hasPurchaseDate: input.purchaseDate != null,
-      score: score,
+  var daysLeft = shelfLifeDays;
+
+  if (input.purchaseDate != null) {
+    final daysOwned = DateTime.now().difference(input.purchaseDate!).inDays;
+    daysLeft = shelfLifeDays - daysOwned;
+
+    reasons.add(
+      'Based on purchase date and storage, estimated shelf life is about $shelfLifeDays day(s).',
     );
 
-    return FreshnessResult(
-      status: status,
-      score: score,
-      estimatedDaysLeft: safeDaysLeft,
-      confidence: confidence,
-      reasons: reasons,
-      imagePrediction: imagePrediction,
+    if (daysLeft < 0) {
+      score -= 40 + (daysLeft.abs() * 5).clamp(0, 40).toInt();
+      reasons.add('This item is past its typical storage window.');
+    } else if (daysLeft <= 2) {
+      score -= 20;
+      reasons.add('This item is near the end of its typical storage window.');
+    }
+  } else {
+    reasons.add(
+      'No purchase date was provided, so date-based confidence is lower.',
     );
   }
 
+  // ------------------------------------------------------------
+  // FINAL RESULT
+  // ------------------------------------------------------------
+
+  score = score.clamp(0, 100).toInt();
+
+  final status = score >= 70
+      ? 'Fresh'
+      : score >= 40
+          ? 'Use Soon'
+          : 'Unsafe';
+
+  final safeDaysLeft = status == 'Unsafe'
+      ? 0
+      : daysLeft.clamp(0, 30).toInt();
+
+  final confidence = _confidenceLabel(
+    imagePrediction: imagePrediction,
+    hasPurchaseDate: input.purchaseDate != null,
+    score: score,
+  );
+
+  return FreshnessResult(
+    status: status,
+    score: score,
+    estimatedDaysLeft: safeDaysLeft,
+    confidence: confidence,
+    reasons: reasons,
+    imagePrediction: imagePrediction,
+  );
+}
   static bool _looksRotten(String label) {
     final normalized = label.toLowerCase().replaceAll(RegExp(r'[^a-z]+'), ' ');
 
